@@ -47,10 +47,7 @@ extension TransactionTypeExtension on TransactionType {
     }
   }
 
-  // ✅ AJOUT : Vérifier si c'est un revenu
-  bool get isIncome {
-    return this == TransactionType.DEPOSIT;
-  }
+  bool get isIncome => this == TransactionType.DEPOSIT;
 }
 
 class Transaction {
@@ -60,7 +57,7 @@ class Transaction {
   final double amount;
   final double fee;
   final String description;
-  final DateTime transactionDate;
+  // final DateTime transactionDate;
   final String? recipientPhone;
   final String? serviceName;
 
@@ -71,16 +68,14 @@ class Transaction {
     required this.amount,
     required this.fee,
     required this.description,
-    required this.transactionDate,
+    // required this.transactionDate,
     this.recipientPhone,
     this.serviceName,
   });
 
-  // ✅ AJOUT : Propriété calculée pour savoir si c'est un revenu
   bool get isIncome => type.isIncome;
 
   factory Transaction.fromJson(Map<String, dynamic> json) {
-    // ✅ Gestion des valeurs null
     final typeStr = json['type'] ?? 'DEPOSIT';
     TransactionType type;
     try {
@@ -99,25 +94,11 @@ class Transaction {
       amount: (json['amount'] ?? 0).toDouble(),
       fee: (json['fee'] ?? 0).toDouble(),
       description: json['description'] ?? '',
-      transactionDate: json['transactionDate'] != null
-          ? DateTime.parse(json['transactionDate'])
-          : DateTime.now(),
+      // transactionDate: json['transactionDate'] != null
+      //     ? DateTime.parse(json['transactionDate'])
+      //       : DateTime.now(),
       recipientPhone: json['recipientPhone'],
       serviceName: json['serviceName'],
     );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'reference': reference,
-      'type': type.toString().split('.').last,
-      'amount': amount,
-      'fee': fee,
-      'description': description,
-      'transactionDate': transactionDate.toIso8601String(),
-      'recipientPhone': recipientPhone,
-      'serviceName': serviceName,
-    };
   }
 }

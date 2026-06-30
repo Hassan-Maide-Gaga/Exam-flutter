@@ -81,10 +81,10 @@ class RecentTransactions extends StatelessWidget {
         transaction.type.displayName,
         style: const TextStyle(fontWeight: FontWeight.w500),
       ),
-      subtitle: Text(
-        DateFormat('dd/MM/yyyy HH:mm').format(transaction.transactionDate),
-        style: const TextStyle(fontSize: 12),
-      ),
+      // subtitle: Text(
+      //   // DateFormat('dd/MM/yyyy HH:mm').format(transaction.transactionDate),
+      //   style: const TextStyle(fontSize: 12),
+      // ),
       trailing: Text(
         '$amountPrefix ${NumberFormat.currency(locale: 'fr_SN', symbol: 'XOF', decimalDigits: 0).format(transaction.amount)}',
         style: TextStyle(

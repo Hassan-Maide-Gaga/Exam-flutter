@@ -31,13 +31,16 @@ class DashboardProvider extends ChangeNotifier {
       }
 
       final balance = await _apiService.getBalance(phone);
-      final transactions = await _apiService.getTransactions(phone, page: 0, size: 10);
+      
+      // ✅ Utiliser une taille de page réduite (5)
+      final transactions = await _apiService.getTransactions(phone, page: 0, size: 5);
 
       _balance = balance;
       _transactions = transactions;
       _error = null;
     } catch (e) {
       _error = e.toString();
+      print('❌ Erreur loadDashboard: $e');
     } finally {
       _isLoading = false;
       notifyListeners();

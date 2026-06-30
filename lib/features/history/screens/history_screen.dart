@@ -203,13 +203,13 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   color: Colors.grey,
                 ),
               ),
-            Text(
-              DateFormat('dd/MM/yyyy HH:mm').format(transaction.transactionDate),
-              style: const TextStyle(
-                fontSize: 12,
-                color: Colors.grey,
-              ),
-            ),
+            // Text(
+            //   DateFormat('dd/MM/yyyy HH:mm').format(transaction.transactionDate),
+            //   style: const TextStyle(
+            //     fontSize: 12,
+            //     color: Colors.grey,
+            //   ),
+            // ),
           ],
         ),
         trailing: Column(

@@ -50,6 +50,14 @@ class MyApp extends StatelessWidget {
           '/history': (context) => const HistoryScreen(),
           '/payment': (context) => const PaymentScreen(),
         },
+        // ✅ Gestion des routes non trouvées
+        onGenerateRoute: (settings) {
+          if (settings.name == '/') {
+            return MaterialPageRoute(builder: (_) => const SplashScreen());
+          }
+          // Route par défaut vers login
+          return MaterialPageRoute(builder: (_) => const LoginScreen());
+        },
       ),
     );
   }

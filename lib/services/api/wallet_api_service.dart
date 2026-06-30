@@ -1,31 +1,32 @@
 import 'dart:convert';
-import 'package:http/http.dart' as http;
 import '../../core/constants/app_constants.dart';
 import '../../models/wallet.dart';
 import '../../models/transaction.dart';
+import 'api_client.dart';
 
 class WalletApiService {
-  final http.Client client;
-
-  WalletApiService({http.Client? client}) : client = client ?? http.Client();
-
   // Récupérer le solde
   Future<double> getBalance(String phone) async {
     try {
       final url = Uri.parse('${AppConstants.apiWallets}/$phone/balance');
       print('📡 GET Balance: $url');
       
-      final response = await client.get(
+      final response = await ApiClient.get(
         url,
         headers: {'Content-Type': 'application/json'},
       );
 
       print('📥 Status Code: ${response.statusCode}');
-      print('📥 Response Body: ${response.body}');
 
       if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        return data['balance'].toDouble();
+        try {
+          final data = json.decode(response.body);
+          return data['balance'].toDouble();
+        } catch (e) {
+          print('❌ Erreur parsing JSON balance: $e');
+          print('📥 Response: ${response.body.substring(0, response.body.length > 200 ? 200 : response.body.length)}');
+          throw Exception('Erreur de parsing du solde');
+        }
       } else {
         throw Exception('Erreur ${response.statusCode}: ${response.body}');
       }
@@ -36,30 +37,94 @@ class WalletApiService {
   }
 
   // Récupérer les transactions
-  Future<List<Transaction>> getTransactions(String phone, {int page = 0, int size = 20}) async {
+  Future<List<Transaction>> getTransactions(String phone, {int page = 0, int size = 10}) async {
     try {
+      // ✅ Réduire la taille de la page pour éviter les réponses trop grandes
+      final actualSize = size > 10 ? 10 : size;
       final url = Uri.parse(
-        '${AppConstants.apiWallets}/$phone/transactions?page=$page&size=$size'
+        '${AppConstants.apiWallets}/$phone/transactions?page=$page&size=$actualSize'
       );
       print('📡 GET Transactions: $url');
       
-      final response = await client.get(
+      final response = await ApiClient.get(
         url,
         headers: {'Content-Type': 'application/json'},
       );
 
       print('📥 Status Code: ${response.statusCode}');
-      print('📥 Response Body: ${response.body.substring(0, response.body.length > 200 ? 200 : response.body.length)}...');
+      print('📥 Response Size: ${response.body.length} octets');
 
       if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        final List<dynamic> transactions = data['content'] ?? [];
-        return transactions.map((t) => Transaction.fromJson(t)).toList();
+        try {
+          // ✅ Nettoyer la réponse avant de la parser
+          String body = response.body;
+          
+          // Supprimer les caractères de contrôle problématiques
+          body = body.replaceAll(RegExp(r'[\x00-\x1F\x7F]'), '');
+          
+          // Supprimer les séquences d'échappement Unicode problématiques
+          body = body.replaceAll(RegExp(r'\\u[0-9A-Fa-f]{4}'), '');
+          
+          final data = json.decode(body);
+          final List<dynamic> transactions = data['content'] ?? [];
+          return transactions.map((t) => Transaction.fromJson(t)).toList();
+        } catch (e) {
+          print('❌ Erreur parsing JSON: $e');
+          print('📥 Response (premier 500 caractères):');
+          print(response.body.substring(0, response.body.length > 500 ? 500 : response.body.length));
+          
+          // ✅ Si parsing échoue, retourner une liste vide
+          return [];
+        }
       } else {
         throw Exception('Erreur ${response.statusCode}: ${response.body}');
       }
     } catch (e) {
       print('❌ Erreur getTransactions: $e');
+      rethrow;
+    }
+  }
+
+  // ✅ Nouveau: Récupérer les transactions avec pagination sur le backend
+  Future<Map<String, dynamic>> getTransactionsWithPagination(String phone, {int page = 0, int size = 10}) async {
+    try {
+      final url = Uri.parse(
+        '${AppConstants.apiWallets}/$phone/transactions?page=$page&size=$size'
+      );
+      print('📡 GET Transactions (with pagination): $url');
+      
+      final response = await ApiClient.get(
+        url,
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        try {
+          String body = response.body;
+          body = body.replaceAll(RegExp(r'[\x00-\x1F\x7F]'), '');
+          final data = json.decode(body);
+          return {
+            'transactions': (data['content'] as List? ?? [])
+                .map((t) => Transaction.fromJson(t))
+                .toList(),
+            'totalElements': data['totalElements'] ?? 0,
+            'totalPages': data['totalPages'] ?? 0,
+            'currentPage': data['number'] ?? 0,
+          };
+        } catch (e) {
+          print('❌ Erreur parsing JSON: $e');
+          return {
+            'transactions': <Transaction>[],
+            'totalElements': 0,
+            'totalPages': 0,
+            'currentPage': 0,
+          };
+        }
+      } else {
+        throw Exception('Erreur ${response.statusCode}: ${response.body}');
+      }
+    } catch (e) {
+      print('❌ Erreur getTransactionsWithPagination: $e');
       rethrow;
     }
   }
@@ -75,16 +140,14 @@ class WalletApiService {
       });
       
       print('📡 POST Transfer: $url');
-      print('📤 Body: $body');
       
-      final response = await client.post(
+      final response = await ApiClient.post(
         url,
         headers: {'Content-Type': 'application/json'},
         body: body,
       );
 
       print('📥 Status Code: ${response.statusCode}');
-      print('📥 Response Body: ${response.body}');
 
       if (response.statusCode != 200) {
         throw Exception('Erreur ${response.statusCode}: ${response.body}');
@@ -105,16 +168,14 @@ class WalletApiService {
       });
       
       print('📡 POST Deposit: $url');
-      print('📤 Body: $body');
       
-      final response = await client.post(
+      final response = await ApiClient.post(
         url,
         headers: {'Content-Type': 'application/json'},
         body: body,
       );
 
       print('📥 Status Code: ${response.statusCode}');
-      print('📥 Response Body: ${response.body}');
 
       if (response.statusCode == 200) {
         return Wallet.fromJson(json.decode(response.body));
@@ -137,16 +198,14 @@ class WalletApiService {
       });
       
       print('📡 POST Withdraw: $url');
-      print('📤 Body: $body');
       
-      final response = await client.post(
+      final response = await ApiClient.post(
         url,
         headers: {'Content-Type': 'application/json'},
         body: body,
       );
 
       print('📥 Status Code: ${response.statusCode}');
-      print('📥 Response Body: ${response.body}');
 
       if (response.statusCode == 200) {
         return Wallet.fromJson(json.decode(response.body));
