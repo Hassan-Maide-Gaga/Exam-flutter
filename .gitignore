@@ -1,0 +1,61 @@
+# Flutter/Dart
+.dart_tool/
+.pub/
+.pub-cache/
+pubspec.lock
+build/
+*.iml
+*.iws
+*.ipr
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+*.log
+*.pid
+*.seed
+*.pid.lock
+
+# Android
+android/app/debug.keystore
+android/app/.gradle/
+android/.gradle
+android/local.properties
+android/*.iml
+android/.settings/
+android/.project
+
+# iOS
+ios/Pods/
+ios/Flutter/App.framework
+ios/Flutter/Engine.xcframework
+ios/Flutter/Flutter.podspec
+ios/Flutter/Generated.xcconfig
+ios/Flutter/plugins/
+ios/.symlinks/
+ios/*.iml
+ios/*.xcworkspace/
+ios/*.xcuserstate
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.xcframework
+
+# Web
+web/
+
+# Windows
+windows/
+linux/
+macos/
+
+# APK
+*.apk
+*.aab
+
+# Coverage
+coverage/
+
+# Environment
+.env
+.env.local
